@@ -1,14 +1,12 @@
 #!/usr/bin/env python
 #
 # namepi.py - renames all the files in the current directory based on
-#             episode info from imdb.
-#             files to be renamed must have the season and episode
-#             number in their file names, season number coming before
-#             episode number - e.g. "Futurama S04 episode #05 - pilot"
-#             NOTE: both season and episode number must exactly be two
-#                   digits long
+#             episode info from thetvdb.com
+#             Following formats of episode and season numbers in the
+#             filename are supported:
+#             - my_fav_tv_show_S06E10.avi
 #             
-# Copyright (C) 2009 Mansour <mansour@oxplot.com>
+# Copyright (C) 2012 Mansour <mansour@oxplot.com>
 #
 
 import sys
@@ -33,9 +31,9 @@ def main():
   # Usage: namepi.py {imdb title number - e.g. tt0934814}
 
   if len(sys.argv) < 2:
-    print "Usage: namepi.py {imdb title number - e.g. tt0934814}"
+    print "Usage: namepi.py {thetvdb id - e.g. 73255}"
     return
-  url = 'http://www.imdb.com/title/%s/episodes' % sys.argv[1]
+  url = 'http://thetvdb.com/?tab=seasonall&id=%s' % sys.argv[1]
 
   # download the page  
 
@@ -45,41 +43,32 @@ def main():
 
   # extract the episode rows
 
-  row_pat = re.compile('<div class="filter-all.+?</table>', re.DOTALL)
-  rows = row_pat.findall(page)
-
-  # extract season number, episode number and episode name
-
-  number_pat = re.compile(r'Season (\d+), Episode (\d+)')
-  name_pat = re.compile(r'<a href="/title/[^"]+">([^<]+)</a>',
-                        re.DOTALL)
-  episodes = {}
-  for r in rows:
-    digits = number_pat.findall(r)
-    if digits:
-      season, episode = [int(x) for x in digits[0]]
-      name = name_pat.search(r).group(1).decode('iso-8859-1')
-      episodes[(season, episode)] = stripspecial(decodehtml(name))
+  row_pat = re.compile(r'<tr>.*?>(\d+) - (\d+)</a>.*?>([^<]+)</a>',
+                       re.DOTALL)
+  episodes = dict(
+    map(
+      lambda a: (
+        (int(a[0]), int(a[1])),
+        stripspecial(decodehtml(a[2].decode('latin1')))
+      ),
+      row_pat.findall(page)
+    )
+  )
 
   # rename files
 
-  avi_pat = re.compile(r'[^\d](\d{2})[^\d]*(\d{2})')
-
+  avi_pat = re.compile(r'S(\d+)E(\d+)', re.I)
   files = [f.decode('utf8')
            for f in os.listdir(".") if avi_pat.search(f)]
-
   for f in files:
-    season, episode = [unicode(int(x)).rjust(2, '0')
-                       for x in avi_pat.findall(f)[0]]
-    name = episodes[(int(season), int(episode))]
+    season, episode = map(int, avi_pat.findall(f)[0])
+    name = episodes[(season, episode)]
     if '.' in f:
       ext = u'.' + f.split(u'.')[-1]
     else:
       ext = u''
-    new_f = season + episode + u'-' + name + ext
-    if f != new_f:
-      shutil.move(f, new_f)
-      stderr((u"'%s' -> '%s'" % (f, new_f) + u'\n').encode('utf8'))
+    new_f = u'%02d%02d-%s%s' % (season, episode, name, ext)
+    shutil.move(f, new_f)
 
 ########################################################################
 # polish names and strip off any special characters
