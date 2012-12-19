@@ -43,7 +43,7 @@ def main():
 
   # extract the episode rows
 
-  row_pat = re.compile(r'<tr>.*?>(\d+) - (\d+)</a>.*?>([^<]+)</a>',
+  row_pat = re.compile(r'<tr>.*?>(\d+)\s*x\s*(\d+)</a>.*?>([^<]+)</a>',
                        re.DOTALL)
   episodes = dict(
     map(
