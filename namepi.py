@@ -6,7 +6,7 @@
 #             filename are supported:
 #             - my_fav_tv_show_S06E10.avi
 #             
-# Copyright (C) 2012 Mansour <mansour@oxplot.com>
+# Copyright (C) 2012 Mansour Behabadi <mansour@oxplot.com>
 #
 
 import sys
