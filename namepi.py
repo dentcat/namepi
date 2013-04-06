@@ -57,7 +57,7 @@ def main():
 
   # rename files
 
-  avi_pat = re.compile(r'S(\d+)E(\d+)', re.I)
+  avi_pat = re.compile(r'S\D*(\d+)\D*E\D*(\d+)', re.I)
   files = [f.decode('utf8')
            for f in os.listdir(".") if avi_pat.search(f)]
   for f in files:
